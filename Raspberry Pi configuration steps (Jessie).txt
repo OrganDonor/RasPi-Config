@@ -1,0 +1,109 @@
+Setting up Raspberry Pi for Organelle (Raspbian Jessie)
+2015-10-11 Paul (adapted from notes for Raspbian Wheezy by Paul and math config notes by Abraxas)
+
+To start, either connect a standard monitor to the Raspberry Pi, or use another Raspberry Pi that’s connected to a standard monitor. NOOBS doesn't understand our 7" LCD.
+
+install Raspbian from NOOBS (follow online instructions), setting keyboard type to US English
+
+change user password
+set to boot to GUI (default on Jessie)
+set host name to organelle
+set keyboard to US English if you forgot to before and now can't type #.
+(other things to set? you can re-run raspi-config or the new GUI config tool)
+
+sudo apt-get update
+sudo apt-get upgrade
+
+mkdir /home/pi/.config/autostart
+mkdir /home/pi/Organelle
+mkdir /home/pi/Organelle/songs
+
+Copy files using SFTP or a thumb drive or whatever:
+config.txt into /boot, replacing the default config.txt, this enables the 7" LCD
+all the versions of "interfaces" to /etc/network
+xorg.conf to /etc/X11
+run-organelle.sh to /home/pi
+supervisor.py to /home/pi/Organelle
+organelle.py to /home/pi/Organelle
+all the MIDI files to /home/pi/Organelle/songs
+organelle.desktop to /home/pi/.config/autostart
+
+(organelle.desktop makes it autostart in the GUI)
+
+if using any of the /etc/network/interfaces versions that connect to a secure wifi network (interfaces.goldenhome and interfaces.wtf), edit those files and replace "passphrase here" with the actual passphrase in double quotes.
+
+sudo nano /etc/profile and add:
+	. /home/pi/run-organelle.sh
+(this makes it autostart in a text-mode login)
+
+# If using interfaces.adhoc as /etc/network/interfaces, 
+sudo apt-get install isc-dhcp-server
+modify /etc/dhcp/dhcpd.conf to:
+  authoritative
+  subnet 192.168.42.1. netmask 255.255.255.0 {
+    range 192.168.42.5 192.168.42.150;
+  }
+  
+(you can now join the ad hoc wireless network and ssh in to 192.168.42.1)
+(Bonjour doesn't seem to work on the ad hoc net, but organelle.local works on the ethernet.)
+
+# It's no longer necessary to free up the serial port, since we're using MIDI instead
+#Free up the serial port by:
+#comment out the getty spawn in /etc/inittab
+#remove the console=ttyAMA0,115200 from /boot/cmdline.txt
+
+optionally, set wallpaper (right click on desktop, choose Desktop Preferences) to a file. The file that prompts for the rotary switch is stored in pytests on Github.
+
+set menu bar to autohide (right click on menu bar, settings, advanced, automatic hiding)
+hide mouse cursor by:
+  sudo apt-get install unclutter
+  # this step seems no longer necessary
+  #add this to /etc/xdg/lxsession/LXDE/autostart
+  #  @unclutter -idle 2 -root
+  while in there, remove the screen saver and pcmanfm (file manager)
+  and also add this to try to prevent screen blanking:
+    @xset s off
+    @xset -dpms
+    @xset s noblank
+
+remove the trash from the desktop (right click on it, select Remove)
+
+Configuring libraries for Organelle's mathemagic:
+
+# sudo apt-get install python-pip       # not needed on Jessie
+sudo pip install mido
+#sudo pip install numpy					# not needed on Jessie
+#sudo pip install six					# not needed on Jessie
+sudo apt-get install python-scipy
+sudo git clone git://pysparse.git.sourceforge.net/gitroot/pysparse/pysparse
+cd pysparse
+sudo nano pysparse/direct/superlu/src/util.c
+   and edit line 32 from:
+   fprintf(stderr, msg);
+   to:
+   fprintf(stderr, "%s", msg);
+sudo python setup.py install
+
+#sudo apt-get install build-essential	# not needed on Jessie
+sudo apt-get install librtmidi2
+sudo apt-get install libasound2-dev
+sudo apt-get install libjack-jackd2-dev
+sudo apt-get install alsa-source		# brings in lots of dependencies!
+sudo pip install --pre python-rtmidi
+sudo pip install git+git://github.com/riccardoscalco/pykov@master
+
+  
+optionally, sudo apt-get install tightvncserver
+
+More against screen blanking... I don't really know which of these are necessary.
+ edit /etc/kbd/config and change BLANK_TIME=0
+
+ edit /etc/X11/xinit/xserverrc and change
+		exec /usr/bin/X -nolisten tcp "$@"
+   to
+		exec /usr/bin/X -s 0 dpms -nolisten tcp "$@" 
+ 
+ 
+(wallpaper: can be set with
+  pcmanfm -w /path/to/filename
+(looks like gpiodemo.py is the closest we still have to the supervisor program. Sigh.)
