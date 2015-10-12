@@ -92,7 +92,7 @@ sudo apt-get install alsa-source		# brings in lots of dependencies!
 sudo pip install --pre python-rtmidi
 sudo pip install git+git://github.com/riccardoscalco/pykov@master
 
-  
+sudo pip install single
 optionally, sudo apt-get install tightvncserver
 
 More against screen blanking... I don't really know which of these are necessary.
