@@ -1,3 +1,3 @@
 [Desktop Entry]
 Type=Application
-Exec=/home/pi/run-organelle.sh
+Exec=/home/pi/run-gui-supervisor.sh
